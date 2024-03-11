@@ -38,9 +38,14 @@ fn main() {
                     c.transform,
                     g,
                 );
-                for s in &snake.body {
+                for (idx, s) in snake.body.iter().enumerate() {
+                    let color = if idx == 0 {
+                        [1.0, 0.0, 0.0, 1.0]
+                    } else {
+                        [0.0, 1.0, 0.0, 1.0]
+                    };
                     rectangle(
-                        [0.0, 1.0, 0.0, 1.0],
+                        color,
                         [s.1 as f64, s.2 as f64, snake.unit as f64, snake.unit as f64],
                         c.transform,
                         g,

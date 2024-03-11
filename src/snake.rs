@@ -23,7 +23,7 @@ impl Snake {
             window_height,
             unit,
             forward_direction: Direction::Right,
-            speed: 1,
+            speed: 10,
             body: [0; 5]
                 .iter()
                 .enumerate()
