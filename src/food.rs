@@ -1,26 +1,30 @@
-use rand::{thread_rng, Rng};
+use std::iter::StepBy;
+use std::ops::Range;
+
+use rand::seq::IteratorRandom;
+use rand::thread_rng;
 
 pub struct Food {
-    window_width: u32,
-    window_height: u32,
-    pub width: f64,
-    pub height: f64,
+    x_range: StepBy<Range<u32>>,
+    y_range: StepBy<Range<u32>>,
+    pub unit: u32,
     pub x: f64,
     pub y: f64,
+    pub color: [f64; 4],
 }
 
 impl Food {
-    pub fn new(window_width: u32, window_height: u32) -> Self {
-        let x = thread_rng().gen_range(10..(window_width - 10));
-        let y = thread_rng().gen_range(10..(window_height - 10));
+    pub fn new(window_width: u32, window_height: u32, unit: u32) -> Self {
+        let x_range = (unit..(window_width - unit)).step_by(unit as usize);
+        let y_range = (unit..(window_height - unit)).step_by(unit as usize);
 
         Food {
-            window_width,
-            window_height,
-            width: 10f64,
-            height: 10f64,
-            x: x as f64,
-            y: y as f64,
+            x_range,
+            y_range,
+            unit,
+            x: 400.0,
+            y: 400.0,
+            color: [1.0, 1.0, 0.0, 1.0],
         }
     }
     pub fn set_position(&mut self, exclude: Vec<(u32, u32)>) {
@@ -30,8 +34,10 @@ impl Food {
     }
 
     fn randomize(&mut self, exclude: Vec<(u32, u32)>) -> (u32, u32) {
-        let x = thread_rng().gen_range(10..(self.window_width - 10));
-        let y = thread_rng().gen_range(10..(self.window_height - 10));
+        let x_range = &self.x_range;
+        let y_range = &self.y_range;
+        let x = x_range.clone().choose(&mut thread_rng()).unwrap();
+        let y = y_range.clone().choose(&mut thread_rng()).unwrap();
         for point in &exclude {
             if (x, y) == *point {
                 return self.randomize(exclude);
