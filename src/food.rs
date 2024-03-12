@@ -8,9 +8,9 @@ pub struct Food {
     x_range: StepBy<Range<u32>>,
     y_range: StepBy<Range<u32>>,
     pub unit: u32,
-    pub x: f64,
-    pub y: f64,
-    pub color: [f64; 4],
+    pub x: i32,
+    pub y: i32,
+    pub color: [f32; 4],
 }
 
 impl Food {
@@ -22,15 +22,15 @@ impl Food {
             x_range,
             y_range,
             unit,
-            x: 400.0,
-            y: 400.0,
+            x: 400,
+            y: 400,
             color: [1.0, 1.0, 0.0, 1.0],
         }
     }
     pub fn set_position(&mut self, exclude: Vec<(u32, u32)>) {
         let (x, y) = self.randomize(exclude);
-        self.x = x as f64;
-        self.y = y as f64;
+        self.x = x as i32;
+        self.y = y as i32;
     }
 
     fn randomize(&mut self, exclude: Vec<(u32, u32)>) -> (u32, u32) {

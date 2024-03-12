@@ -1,11 +1,15 @@
 extern crate piston_window;
 extern crate rand;
 
+use chrono::Local;
 use piston_window::*;
+use std::fs::{self, OpenOptions};
+use std::io::prelude::*;
+use std::path::PathBuf;
 use std::time::Instant;
 
 mod game;
-use game::Game;
+use game::*;
 mod gui;
 use gui::create_menu_buttons;
 mod food;
@@ -13,9 +17,10 @@ mod snake;
 
 static WINDOW_WIDTH: u32 = 1280;
 static WINDOW_HEIGHT: u32 = 720;
-static POINT_UNIT: u32 = 10;
+static POINT_UNIT: u32 = 20;
 
 fn main() {
+    write_to_debug_file(format!("Game started - {}", format_date()).as_str());
     let mut window: PistonWindow = WindowSettings::new("Snake", [WINDOW_WIDTH, WINDOW_HEIGHT])
         .exit_on_esc(true)
         .build()
@@ -26,37 +31,57 @@ fn main() {
     let mut last_update = Instant::now();
 
     while let Some(e) = events.next(&mut window) {
-        let food = &mut game.food;
-        let snake = &mut game.snake;
+        if game.state == GameState::GameOver {
+            continue;
+        }
+
         if let Some(_) = e.render_args() {
-            window.draw_2d(&e, |c, g, _| {
-                clear([0.0; 4], g);
-                snake.one_frame_move();
-                rectangle(
-                    [1.0, 1.0, 0.0, 1.0],
-                    [food.x, food.y, food.unit as f64, food.unit as f64],
-                    c.transform,
-                    g,
-                );
-                for (idx, s) in snake.body.iter().enumerate() {
-                    let color = if idx == 0 {
-                        [1.0, 0.0, 0.0, 1.0]
-                    } else {
-                        [0.0, 1.0, 0.0, 1.0]
-                    };
-                    rectangle(
-                        color,
-                        [s.1 as f64, s.2 as f64, snake.unit as f64, snake.unit as f64],
-                        c.transform,
-                        g,
-                    );
-                }
+            game.render(&e, &mut window);
+        }
+
+        game.add_control(e);
+
+        if game.eating_check() {
+            last_update = Instant::now();
+        }
+
+        if game.impact_check() {
+            game.over(|| {
+                last_update = Instant::now();
             });
         }
 
-        if last_update.elapsed().as_secs() > 3 {
-            (*food).set_position(vec![]);
-            last_update = Instant::now();
+        {
+            let food = &mut game.food;
+            if last_update.elapsed().as_secs() > 10 {
+                (*food).set_position(vec![]);
+                last_update = Instant::now();
+            }
         }
     }
+}
+
+fn write_to_debug_file(message: &str) {
+    let mut file_path = PathBuf::from("log");
+    // 确保log目录存在
+    if !file_path.exists() {
+        fs::create_dir_all(&file_path).expect("Failed to create log directory");
+    }
+    // 设定日志文件名称
+    file_path.push("debug_log.txt");
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(file_path)
+        .expect("Failed to open log file");
+    if let Err(e) = writeln!(file, "{}", message) {
+        // 如果写入文件失败，将错误信息打印到控制台
+        eprintln!("Couldn't write to file: {}", e);
+    }
+}
+
+fn format_date() -> String {
+    let now = Local::now();
+    now.format("%Y-%m-%d %H:%M:%S").to_string()
 }
